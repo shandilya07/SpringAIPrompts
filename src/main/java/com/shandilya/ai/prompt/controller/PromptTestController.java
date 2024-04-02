@@ -1,19 +1,17 @@
 package com.shandilya.ai.prompt.controller;
 
-import com.shandilya.ai.prompt.model.TopDJ;
 import org.springframework.ai.chat.ChatClient;
-import org.springframework.ai.chat.ChatResponse;
-import org.springframework.ai.chat.Generation;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
-import org.springframework.ai.parser.BeanOutputParser;
+import org.springframework.ai.chat.prompt.SystemPromptTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -36,30 +34,29 @@ public class PromptTestController {
     }
 
     @GetMapping("/dj/{year}")
-    public TopDJ topDJ(@PathVariable("year") int year) {
-        BeanOutputParser<TopDJ> parser = new BeanOutputParser<>(TopDJ.class);
-        String promptString = """
+    public String topDJ(@PathVariable("year") int year) {
+
+        String systemText = """
+               Your name is {name} and you are an EDM aficionado and has lots of insights about the art of
+               EDM creation. You have deep understanding of usual trends of EDM and why an artist is
+               liked by the masses which results to them being the most listened and voted artist of the
+               year. You should reply to the user request with this knowledge as one liner information
+               which tells why the particular EDM artist was voted world number 1 and what subgenre of EDM
+               the particular artist produces music in. You should also include your name in the response 
+               like "I am {name} and here is why this artist was voted number 1.
+               """;
+
+        SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate(systemText);
+        Message systemMessage = systemPromptTemplate.createMessage(Map.of("name", "EDM-AF01"));
+
+        String userText = """
                 Who was the world number on DJ in the year {year}
-                {format}
                 """;
 
-        //ChatResponse chatResponse = chatClient.call(approachOne(promptString, year, parser));
-        ChatResponse chatResponse = chatClient.call(approachTwo(promptString, year, parser));
+        PromptTemplate userPromptTemplate = new PromptTemplate(userText);
+        Message userMessage = userPromptTemplate.createMessage(Map.of("year", year));
 
-        Generation generation = chatResponse.getResult();
-        return parser.parse(generation.getOutput().getContent());
-    }
-
-    private Prompt approachTwo(final String string, int year, BeanOutputParser<?> parser) {
-        PromptTemplate template = new PromptTemplate(string, Map.of("year",year, "format", parser.getFormat()));
-        return template.create();
-    }
-
-    private Prompt approachOne(final String string, int year, BeanOutputParser<?> parser) {
-        PromptTemplate template = new PromptTemplate(string);
-        template.add("year", year);
-        template.add("format", parser.getFormat());
-        template.setOutputParser(parser);
-        return template.create();
+        Prompt prompt = new Prompt(List.of(systemMessage, userMessage));
+        return chatClient.call(prompt).getResult().getOutput().getContent();
     }
 }

@@ -9,5 +9,4 @@ public class SpringAiPromptDemoApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(SpringAiPromptDemoApplication.class, args);
 	}
-''
 }
