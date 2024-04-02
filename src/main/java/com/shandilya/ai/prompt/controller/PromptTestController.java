@@ -1,11 +1,13 @@
 package com.shandilya.ai.prompt.controller;
 
-import org.springframework.ai.chat.ChatClient;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
+import org.springframework.ai.openai.OpenAiChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,10 +20,13 @@ import java.util.Map;
 @RequestMapping("/v1/ai")
 public class PromptTestController {
 
-    private final ChatClient chatClient;
+    @Value("classpath:/prompts/system-top-dj.st")
+    private Resource topDj;
+
+    private final OpenAiChatClient chatClient;
 
     @Autowired
-    public PromptTestController(ChatClient chatClient) {
+    public PromptTestController(OpenAiChatClient chatClient) {
         this.chatClient = chatClient;
     }
 
@@ -36,7 +41,7 @@ public class PromptTestController {
     @GetMapping("/dj/{year}")
     public String topDJ(@PathVariable("year") int year) {
 
-        String systemText = """
+        /*String systemText = """
                Your name is {name} and you are an EDM aficionado and has lots of insights about the art of
                EDM creation. You have deep understanding of usual trends of EDM and why an artist is
                liked by the masses which results to them being the most listened and voted artist of the
@@ -44,9 +49,9 @@ public class PromptTestController {
                which tells why the particular EDM artist was voted world number 1 and what subgenre of EDM
                the particular artist produces music in. You should also include your name in the response 
                like "I am {name} and here is why this artist was voted number 1.
-               """;
+               """;*/
 
-        SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate(systemText);
+        SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate(topDj);
         Message systemMessage = systemPromptTemplate.createMessage(Map.of("name", "EDM-AF01"));
 
         String userText = """
